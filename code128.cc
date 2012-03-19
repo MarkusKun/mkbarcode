@@ -1,6 +1,7 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include <sstream>
 
 #include "code128.h"
 #include "barstrings.h"
@@ -83,11 +84,6 @@ uint8_t code128::lookup(const std::string& barcode){
 }
 
 void code128::readComplete(std::string barcode){
-  const uint8_t stopChar = 106;
-  const uint8_t startCharA = 103;
-  const uint8_t startCharB = 104;
-  const uint8_t startCharC = 105;
-  
   uint8_t table=0;
   
   // every char has 11 "modules";
@@ -147,9 +143,67 @@ void code128::readComplete(std::string barcode){
     std::cout << std::dec << (int) barValue << std::endl;
   } // while true.
 }
-       
-  
-  
-  
+     
+
+uint8_t code128::getValueTypeB(unsigned char inChar){
+  uint8_t barValue=0;
+  if( 
+    ('A'<= inChar) &&
+    (inChar <= 'Z')
+    ) // capital char
+  {
+    barValue = inChar - 'A' + 33;
+    //cout << "Letter " << *stringIterator <<  " : " << (int) barValue << endl;
+  }
+  if (
+    ('0'<= inChar) &&
+    (inChar <= '9')
+    ) // number
+  {
+    barValue = inChar - '0' + 16;
+    //cout << "Number " << *stringIterator <<  " : " << (int) barValue << endl;
+  }
+  return barValue;
+}
+uint8_t code128::getValueTypeC(uint8_t inNum){
+  if (inNum < 100){
+    return inNum;
+  }else{
+    return 0;
+  }
+}
+
+uint8_t code128::calculateChecksum(const std::vector<uint8_t>& codeValues){
+  if (codeValues.size()<2){
+    return 0;
+  }
+  unsigned int currentSum=codeValues[0];
+  std::vector<uint8_t>::const_iterator vecIterator;
+  unsigned int currentMul;
+  for (
+    vecIterator  = codeValues.begin(), currentMul=0;
+    vecIterator != codeValues.end();
+    vecIterator++,currentMul++
+    )
+  {
+    currentSum += currentMul * (*vecIterator);
+    currentSum = currentSum % 103;
+  }
+  return currentSum;
+}
+
+std::string code128::getBarCode(const std::vector<uint8_t>& codeValues){
+  std::stringstream returnStream;
+  std::vector<uint8_t>::const_iterator vecIterator;
+  for (
+    vecIterator  = codeValues.begin();
+    vecIterator != codeValues.end();
+    vecIterator++
+    )
+  {
+    returnStream << getBarCode(*vecIterator);
+  }
+  return (returnStream.str());
+}
 
 
