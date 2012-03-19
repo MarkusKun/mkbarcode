@@ -1,4 +1,4 @@
-OBJECTS := ean.o testing.o
+OBJECTS := ean.o testing.o code128.o barstrings.o
 BINARY  := mkbarcode.bin
 
 all: $(BINARY)

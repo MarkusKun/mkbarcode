@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "ean.h"
+#include "barstrings.h"
 
 std::string ean::getRightHand(uint8_t number){
   switch (number){
@@ -26,50 +27,20 @@ std::string ean::getLeftHandInvert(uint8_t number){
   return invert(getRightHand(number));
 }
 
-std::string ean::invert(std::string barcode){
-  std::string::iterator stringRunner;
-  for (
-    stringRunner  = barcode.begin();
-    stringRunner != barcode.end();
-    stringRunner++
-    )
-  {
-    if ('0' == (*stringRunner)){
-      (*stringRunner)='1';
-    }else{
-      (*stringRunner)='0';
-    }
-  }
-  return barcode;
-}
-
 std::string ean::getLeftHandMirror(uint8_t number){
   return mirror(getRightHand(number));
 }
 
-std::string ean::mirror(const std::string& barcode){
-  std::string returnString;
-  std::string::const_reverse_iterator stringRunner;
-  for (
-    stringRunner  = barcode.rbegin();
-    stringRunner != barcode.rend();
-    stringRunner++
-    )
-  {
-    returnString.push_back(*stringRunner);
-  }
-  return returnString;
-}
 
 uint8_t ean::lookupRightHand(const std::string& barcode){
-  static std::map< std::string , unsigned int > typeMap;
+  static std::map< std::string , uint8_t > typeMap;
   if (typeMap.empty()){
     uint8_t curNum;
     for (curNum=0; curNum<10; curNum++){
       typeMap[getRightHand(curNum)]=curNum;
     } // fill map
   } // fill map
-  std::map<std::string,unsigned int>::const_iterator mapFinder;
+  std::map<std::string,uint8_t>::const_iterator mapFinder;
   mapFinder = typeMap.find(barcode);
   if (typeMap.end() != mapFinder){
     return mapFinder->second;
@@ -77,8 +48,6 @@ uint8_t ean::lookupRightHand(const std::string& barcode){
     return 42; // error
   }
 }
-  
-
 
 ean::codeReturn ean::getType(const std::string& barcode){
   using std::map; using std::string;

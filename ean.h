@@ -12,15 +12,12 @@ namespace ean{
     CODETYPE_INVERSE
   };
   
-  
   std::string getRightHand(uint8_t number);
   std::string getLeftHandMirror(uint8_t number); // also "even"
   std::string getLeftHandInvert(uint8_t number); // also "odd"
   
   uint8_t lookupRightHand(const std::string& barcode);
   
-  std::string mirror(const std::string& barcode);
-  std::string invert(std::string barcode);
   
   struct codeReturn{
     codeType_t  codeType;

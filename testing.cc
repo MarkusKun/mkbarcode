@@ -2,7 +2,9 @@
 
 #include "stdint.h"
 
+#include "barstrings.h"
 #include "ean.h"
+#include "code128.h"
 
 int main(int argc, char* argv[]){
   std::cout << "test" << std::endl;
@@ -17,19 +19,33 @@ int main(int argc, char* argv[]){
     std::cout << (int) testZiffer << " Right " << ean::getRightHand(testZiffer);
     std::cout << " LeftI " << ean::getLeftHandInvert(testZiffer);
     std::cout << " LeftM " << ean::getLeftHandMirror(testZiffer);
+    std::cout << " 128: " << code128::getBarCode(testZiffer);
     std::cout << std::endl;
   }
-  if (argc>1){
-    std::string testcode = argv[1];
-    switch (ean::getType(testcode).codeType){
-    case ean::CODETYPE_UNKNOWN: std::cout << "unknown code" << std::endl; break;
-    case ean::CODETYPE_RIGHT: std::cout << "Right" << std::endl; break;
-    case ean::CODETYPE_MIRROR: std::cout << "Mirror" << std::endl; break;
-    case ean::CODETYPE_INVERSE: std::cout << "Inverse" << std::endl; break;
-    } // break
-    
-  } // if param
+  #ifdef TRY_EAN_LOOKUP
+  {
+    if (argc>1){
+      std::string testcode = argv[1];
+      switch (ean::getType(testcode).codeType){
+      case ean::CODETYPE_UNKNOWN: std::cout << "unknown code" << std::endl; break;
+      case ean::CODETYPE_RIGHT: std::cout << "Right" << std::endl; break;
+      case ean::CODETYPE_MIRROR: std::cout << "Mirror" << std::endl; break;
+      case ean::CODETYPE_INVERSE: std::cout << "Inverse" << std::endl; break;
+      } // break
+      
+    } // if param
+  }
+  #endif // TRY_EAN_LOOKUP
   
+  #define TRY_CODE128_LOOKUP
+  #ifdef TRY_CODE128_LOOKUP
+  {
+    if (argc>1){
+      std::string testcode = argv[1];
+      code128::readComplete(testcode);
+    } // if param
+  }
+  #endif // TRY_CODE128_LOOKIP
   
   return 0;
 }
