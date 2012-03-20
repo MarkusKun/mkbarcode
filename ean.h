@@ -12,6 +12,13 @@ namespace ean{
     CODETYPE_INVERSE
   };
   
+  /*!
+   * \brief return "right hand"-barcode for given number (0-9)
+   *
+   * this function returns the "right-hand"-representation of the barcode
+   * for the given number. It is called "right hand" as it is the 
+   * later part of the barcode.
+   */
   std::string getRightHand(uint8_t number);
   std::string getLeftHandMirror(uint8_t number); // also "even"
   std::string getLeftHandInvert(uint8_t number); // also "odd"

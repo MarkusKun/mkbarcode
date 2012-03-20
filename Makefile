@@ -6,5 +6,9 @@ all: $(BINARY)
 $(BINARY) : $(OBJECTS)
 	 $(CXX) -o $@ $^ 
 
+doc :
+	doxygen doxygen.conf
+
 clean:
 	rm -rf $(OBJECTS)
+	
