@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "pixelbild.h"
+
 /*!
  * \brief mirrors the given string
  *
@@ -35,5 +37,25 @@ std::string mirror(const std::string& barcode);
  * \return              inverted code
  */
 std::string invert(std::string barcode);
+
+/*!
+ * \brief converts barcode to a bitmap
+ *
+ * This function creates a bitmap from the given barcode.
+ * A '0' will be represented as a white pixel, 
+ * a '1' (and everything else) will be a black pixel.
+ * 
+ * The resulting image will have the same width as the string has chars
+ * and a height of 1 (for 1-dimensional barcodes). The number of the
+ * barcode will not become part of the picture. This allows easier
+ * resizing in other programs.
+ *
+ * \note as the bitmap has a height of 1, the "barcode" technically
+ *       has no vertical bars and as such is more of a "dotcode"
+ *
+ * \param[in] barcode   barcode to convert
+ * \return              pixelbild of the barcode
+ */
+pixelbild toPixelbild(const std::string& barcode);
 
 #endif // BARSTRINGS_H

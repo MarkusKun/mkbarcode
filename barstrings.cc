@@ -31,3 +31,24 @@ std::string mirror(const std::string& barcode){
   return returnString;
 }
 
+pixelbild toPixelbild(const std::string& barcode){
+  pixel blackPixel(0,0,0);
+  pixelbild meinBild(barcode.size(),1,blackPixel); // default is black
+  { // fill bild with pixels from barcode
+    pixel whitePixel(255,255,255);
+    std::string::const_iterator stringIterator;
+    unsigned int pixelPos;
+    for (
+      stringIterator  = barcode.begin(), pixelPos=0;
+      stringIterator != barcode.end();
+      stringIterator++, pixelPos++
+      )
+    {
+      if ('0' == *stringIterator){ // should be white
+        meinBild.setPixel(0,pixelPos,whitePixel);
+      }
+    }
+  }
+  return meinBild;
+}
+

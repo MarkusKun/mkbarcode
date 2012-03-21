@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
     exit(EXIT_FAILURE);
   }
   std::string programMode = argv[1];
-  std::cout << programMode << std::endl;
+  dout << programMode << std::endl;
   
   if ("--test" == programMode){
     uint8_t testZiffer;
@@ -58,6 +58,8 @@ int main(int argc, char* argv[]){
   }
   if ("--create128" == programMode){
     std::string codeToCreate = argv[2];
+    std::string outFilename = codeToCreate + ".code128.bmp";
+    
     std::vector<uint8_t> codeValues;
     codeValues.push_back(code128::startCharB);
     std::string::const_iterator stringIterator;
@@ -78,9 +80,19 @@ int main(int argc, char* argv[]){
       vecIterator++
       )
     {
-      std::cout << " " << (int) (*vecIterator);
+      dout << " " << (int) (*vecIterator);
     } // for all elements
-    std::cout << endl;
+    dout << endl;
+
+    std::string fullBarcode = code128::getBarCode(codeValues);
+    dout << fullBarcode << endl;
+
+    { // create image and write to file
+      pixelbild barcodeBild = toPixelbild(fullBarcode);
+    
+      bmpreader::writeFile(barcodeBild,outFilename);
+    }
+
   } // if create
   if("--create128K" == programMode){
     using std::dec;
@@ -90,7 +102,14 @@ int main(int argc, char* argv[]){
       convertStream << argv[2];
       convertStream >> dec >> numberToCreate;
     }
-    std::cout << "Creating for number " << numberToCreate << std::endl;
+    std::string outFilename;
+    { // convert number to filename
+      std::ostringstream convertStream;
+      convertStream << dec << numberToCreate;
+      convertStream << ".code128.bmp";
+      outFilename = convertStream.str();
+    }
+    
     std::vector<uint8_t> codeValues;
     codeValues.push_back(code128::startCharB);
     codeValues.push_back(code128::getValueTypeB('K'));
@@ -112,45 +131,18 @@ int main(int argc, char* argv[]){
       vecIterator++
       )
     {
-      std::cout << " " << (int) (*vecIterator);
+      dout << " " << (int) (*vecIterator);
     } // for all elements
-    std::cout << endl;
+    dout << endl;
     std::string fullBarcode = code128::getBarCode(codeValues);
-    std::cout << fullBarcode << endl;
+    dout << fullBarcode << endl;
     
-    pixelbild meinBild(fullBarcode.size(),1,defaultBGPixel); // default is black
-    { // fill bild with pixels from barcode
-      pixel whitePixel;
-      { 
-        whitePixel.red=255;
-        whitePixel.green=255;
-        whitePixel.blue=255;
-      }
-      std::string::const_iterator stringIterator;
-      unsigned int pixelPos;
-      for (
-        stringIterator  = fullBarcode.begin(), pixelPos=0;
-        stringIterator != fullBarcode.end();
-        stringIterator++, pixelPos++
-        )
-      {
-        std::cout << (*stringIterator);
-        if ('0' == *stringIterator){ // should be white
-          meinBild.setPixel(0,pixelPos,whitePixel);
-        }
-      }
-      std::cout << endl;
+    { // create image and write to file
+      pixelbild barcodeBild = toPixelbild(fullBarcode);
+    
+      bmpreader::writeFile(barcodeBild,outFilename);
     }
-    { // then, write to bitmap file
-      std::string outFilename;
-      { // convert number to filename
-        std::ostringstream convertStream;
-        convertStream << dec << numberToCreate;
-        convertStream << ".code128.bmp";
-        outFilename = convertStream.str();
-      }
-      bmpreader::writeFile(meinBild, outFilename);
-    }
+    
   } // if create
   
   
