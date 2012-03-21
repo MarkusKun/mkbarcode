@@ -1,0 +1,2 @@
+PATH_TO_BILDSPIELE := ../bildspiele/
+PATH_TO_DEBUGOUT   := ../debugout/
