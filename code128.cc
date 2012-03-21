@@ -122,6 +122,7 @@ void code128::readComplete(std::string barcode){
       }
     }
   } // checking for start
+  std::vector<uint8_t> barValues;
   while(true){
     uint8_t barValue;
     std::string subCode = barcode.substr(0,11);
@@ -134,6 +135,7 @@ void code128::readComplete(std::string barcode){
       std::cout << subCode;
       if (stopChar == lookup(subCode)){ // if stop
         std::cout << " Valid Stop!" << std::endl;
+        barValues.push_back(stopChar);
       }else{
         std::cout << " invalid sign!" << std::endl;
       }
@@ -141,7 +143,16 @@ void code128::readComplete(std::string barcode){
     }
     barcode = barcode.substr(11);
     std::cout << std::dec << (int) barValue << std::endl;
+    barValues.push_back(barValue);
   } // while true.
+  if (barValues.size()<4){
+    std::cerr << "less than 4 chars - only start, checksum and stop?" << std::endl;
+    return;
+  }
+  barValues.resize(barValues.size()-2); // drop stop and checksum
+  uint8_t calcChecksum = calculateChecksum(barValues);
+  std::cout << "calculated Checksum: " << (int) calcChecksum << std::endl;
+  
 }
      
 
