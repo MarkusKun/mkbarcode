@@ -1,4 +1,5 @@
 *.o
 *.bin
+*.bin
 html
-
+Makefile.Paths

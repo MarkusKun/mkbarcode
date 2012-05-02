@@ -19,7 +19,7 @@ std::string code128::getBarCode(uint8_t number){
   case 8  : return "10001100100"; case 62 : return "11110001010";
   case 9  : return "11001001000"; case 63 : return "10100110000";
   case 10 : return "11001000100"; case 64 : return "10100001100";
-  case 11 : return "11001000100"; case 65 : return "10010110000";
+  case 11 : return "11000100100"; case 65 : return "10010110000";
   case 12 : return "10110011100"; case 66 : return "10010000110";
   case 13 : return "10011011100"; case 67 : return "10000101100";
   case 14 : return "10011001110"; case 68 : return "10000100110";
