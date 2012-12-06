@@ -167,6 +167,13 @@ uint8_t code128::getValueTypeB(unsigned char inChar){
     //cout << "Letter " << *stringIterator <<  " : " << (int) barValue << endl;
   }
   if (
+    ('a' <= inChar) &&
+    (inChar <= 'z')
+    )
+  {
+    barValue = inChar - 'a' + 65;
+  }
+  if (
     ('0'<= inChar) &&
     (inChar <= '9')
     ) // number
@@ -215,6 +222,19 @@ std::string code128::getBarCode(const std::vector<uint8_t>& codeValues){
     returnStream << getBarCode(*vecIterator);
   }
   return (returnStream.str());
+}
+
+void code128::printHelp(std::ostream& outStream){
+  using std::endl;
+  outStream << "This is the 128 help" << endl;
+  outStream << "StartA/B/C  : 103/104/105" << endl;
+  outStream << "SwitchA/B/C : 101/100/99 (from *other* mode)" << endl;
+  outStream << "ShiftA/B    : 98 (from *other* mode; for next char" << endl;
+  outStream << "Stop        : 106 (need checksum first)" << endl;
+  outStream << "A-Z         : 33-58 (Code A and B)" << endl;
+  outStream << "a-z         : 65-90 (Code B)" << endl;
+  outStream << "0-9         : 16-25 (Code A and B)" << endl;
+  outStream << "0-99        :  0-99 (Code C)" << endl;
 }
 
 

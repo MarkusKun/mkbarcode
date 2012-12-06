@@ -24,6 +24,8 @@ namespace code128{
   
   uint8_t calculateChecksum(const std::vector<uint8_t>& codeValues);
   
+  void printHelp(std::ostream& outStream);
+  
   
 }; // namespace
 
