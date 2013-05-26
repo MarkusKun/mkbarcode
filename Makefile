@@ -8,7 +8,7 @@ include $(PATH_TO_DEBUGOUT)Makefile.inc
 # OBJ_PIXELBILD and OBJ_BMPREADER
 include $(PATH_TO_BILDSPIELE)Makefile.inc
 
-OBJECTS := ean.o testing.o code128.o barstrings.o $(OBJ_DEBUGOUT) $(OBJ_PIXELBILD) $(OBJ_BMPREADER)
+OBJECTS := ean.o mkbarcode.o code128.o barstrings.o $(OBJ_DEBUGOUT) $(OBJ_PIXELBILD) $(OBJ_BMPREADER)
 BINARY  := mkbarcode.bin
 
 CXXFLAGS += -I$(PATH_TO_DEBUGOUT) -I$(PATH_TO_BILDSPIELE)
