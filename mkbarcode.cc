@@ -14,19 +14,50 @@
 #include "ean.h"
 #include "code128.h"
 
+#include "mkbarcode.h"
+
+void mkbarcode::printHelp(const std::string& programName){
+  using std::cout; using std::endl;
+  cout << "Usage: " << programName << " MODE [Parameter]" << endl;
+  cout << "  --help                 print this help message" << endl;
+  
+  cout << "Available Modes:" << endl;
+  cout << "  --test                 Print EAN codes for numbers 0-9" << endl;
+  cout << "  --lookupEAN BARCODE    lookup a single digit for EAN" << endl;
+  cout << "  --lookup128 BARCODE    lookup a complete Code128-barcode" << endl;
+  cout << "  --create128B STRING    Convert the given String to Code128 in Code B" << endl;
+  cout << "  --create128I           Interactive mode for Code128 creation" << endl;
+  cout << "  --create128K NUMBER    Create 'K12345678' (leading 'K', 8 chars) in Code 128." << endl;
+  cout << "                         'K' is in CodeB, the numbers in CodeC" << endl;  
+  
+}
+
+
+void mkbarcode::printHelpReminder(const std::string& programName){
+  using std::cout; using std::endl;
+  cout << "Try '" << programName << "  --help' for more information" << endl;
+}
+  
+
 int main(int argc, char* argv[]){
   using std::cout; using std::endl;
   dout.loadConfigFile("debug.config");
   
   dout.startScope("main");
   
-  if (argc<3){
-    std::cerr << "Error on parameter parsing" << std::endl;
-    std::cerr << "Try 'programname --help' for more information" << std::endl;
+  if (argc<2){ // no parameter / no mode
+    std::cerr << "No mode given" << std::endl;
+    mkbarcode::printHelpReminder(argv[0]);
     exit(EXIT_FAILURE);
   }
+    
   std::string programMode = argv[1];
   dout << programMode << std::endl;
+  
+  if ("--help" == programMode){
+    mkbarcode::printHelp(argv[0]);
+    exit(EXIT_SUCCESS);
+  }
   
   if ("--test" == programMode){
     uint8_t testZiffer;
@@ -44,19 +75,41 @@ int main(int argc, char* argv[]){
     }
   }
   if ("--lookupEAN" == programMode){
+    if (argc<3){
+      std::cerr << "No barcode given - nothing to lookup" << std::endl;
+      mkbarcode::printHelpReminder(argv[0]);
+      exit(EXIT_FAILURE);
+    }
     std::string testcode = argv[2];
-    switch (ean::getType(testcode).codeType){
-    case ean::CODETYPE_UNKNOWN: std::cout << "unknown code" << std::endl; break;
-    case ean::CODETYPE_RIGHT: std::cout << "Right" << std::endl; break;
-    case ean::CODETYPE_MIRROR: std::cout << "Mirror" << std::endl; break;
-    case ean::CODETYPE_INVERSE: std::cout << "Inverse" << std::endl; break;
-    } // break
+    ean::codeReturn lookupResult = ean::getType(testcode);
+    
+    switch (lookupResult.codeType){
+    case ean::CODETYPE_UNKNOWN: std::cout << "unknown code"; break;
+    case ean::CODETYPE_RIGHT:   std::cout << "Right "      ; break;
+    case ean::CODETYPE_MIRROR:  std::cout << "Mirrored "   ; break;
+    case ean::CODETYPE_INVERSE: std::cout << "Inverse "    ; break;
+    } // switch
+    if (ean::CODETYPE_UNKNOWN != lookupResult.codeType){
+      std::cout << std::dec << (int)lookupResult.codeValue;
+    }
+    std::cout << std::endl;
+    
   }
   if ("--lookup128" == programMode){
     std::string testcode = argv[2];
+    if (argc<3){
+      std::cerr << "No barcode given - nothing to lookup" << std::endl;
+      mkbarcode::printHelpReminder(argv[0]);
+      exit(EXIT_FAILURE);
+    }
     code128::readComplete(testcode);
   }
   if ("--create128B" == programMode){ // code B
+    if (argc<3){
+      std::cerr << "No string given - nothing to create" << std::endl;
+      mkbarcode::printHelpReminder(argv[0]);
+      exit(EXIT_FAILURE);
+    }
     std::string codeToCreate = argv[2];
     std::string outFilename = codeToCreate + ".code128.bmp";
     
@@ -225,6 +278,11 @@ int main(int argc, char* argv[]){
     }
   }
   if("--create128K" == programMode){
+    if (argc<3){
+      std::cerr << "No number given - nothing to create" << std::endl;
+      mkbarcode::printHelpReminder(argv[0]);
+      exit(EXIT_FAILURE);
+    }
     using std::dec;
     unsigned int numberToCreate;
     { // convert given number K12345678 
