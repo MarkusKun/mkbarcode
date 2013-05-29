@@ -28,6 +28,15 @@ namespace mkbarcode{
    */
   void printHelpReminder(const std::string& programName);
   
+  void printLookupResult(const ean::codeReturn result);
+  
+  void printTest(std::ostream& out);
+  
+  void create128interactive();
+  
+  void lookupEANinteractive();
+  
+  void lookupEAN(const std::string& givenBarcode); 
   
 }; // namespace mkbarcode
 

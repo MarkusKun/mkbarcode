@@ -2,6 +2,7 @@
 #define _EAN_H
 
 #include <string>
+#include <vector>
 #include <stdint.h>
 
 namespace ean{
@@ -69,6 +70,8 @@ namespace ean{
    * If a match is found, the appropiate type and number are returned
    */
   codeReturn getType(const std::string& barcode);
+  
+  std::vector<ean::codeReturn> getTypes(const std::string& barcode);
 }; // namespace
 
 

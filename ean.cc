@@ -76,7 +76,23 @@ ean::codeReturn ean::getType(const std::string& barcode){
   // unsuccess
   returnValue.codeType = CODETYPE_UNKNOWN;
   return returnValue;
-  
-  
 }
+
+std::vector<ean::codeReturn> ean::getTypes(const std::string& barcode){
+  std::vector<ean::codeReturn> returnValues;
+  unsigned int digitIterator;
+  for (
+    digitIterator = 0;
+    digitIterator < barcode.size();
+    digitIterator+= 7
+    )
+  {
+    std::string currentDigit = barcode.substr(digitIterator,7);
+    returnValues.push_back(ean::getType(currentDigit));
+  }
+  return returnValues;
+}
+  
+
+
 
