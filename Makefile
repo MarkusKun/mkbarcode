@@ -11,7 +11,7 @@ include $(PATH_TO_BILDSPIELE)Makefile.inc
 OBJECTS := ean.o mkbarcode.o code128.o barstrings.o $(OBJ_DEBUGOUT) $(OBJ_PIXELBILD) $(OBJ_BMPREADER)
 BINARY  := mkbarcode.bin
 
-CXXFLAGS += -I$(PATH_TO_DEBUGOUT) -I$(PATH_TO_BILDSPIELE)
+CXXFLAGS += -I$(PATH_TO_DEBUGOUT) -I$(PATH_TO_BILDSPIELE) #-g
 
 all_bins: $(BINARY)
 

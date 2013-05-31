@@ -8,19 +8,36 @@
 
 std::string ean::getRightHand(uint8_t number){
   switch (number){
-    case 0: return "1110010";
-    case 1: return "1100110";
-    case 2: return "1101100";
-    case 3: return "1000010";
-    case 4: return "1011100";
-    case 5: return "1001110";
-    case 6: return "1010000";
-    case 7: return "1000100";
-    case 8: return "1001000";
-    case 9: return "1110100";
+    case 0:  return "1110010";
+    case 1:  return "1100110";
+    case 2:  return "1101100";
+    case 3:  return "1000010";
+    case 4:  return "1011100";
+    case 5:  return "1001110";
+    case 6:  return "1010000";
+    case 7:  return "1000100";
+    case 8:  return "1001000";
+    case 9:  return "1110100";
     default: return "1111111 ERROR";
   }
 }
+
+std::string ean::getLeftHandOrder(uint8_t number){
+  switch (number){
+    case 0:  return "OOOOOO";
+    case 1:  return "OOEOEE";
+    case 2:  return "OOEEOE";
+    case 3:  return "OOEEEO";
+    case 4:  return "OEOOEE";
+    case 5:  return "OEEOOE";
+    case 6:  return "OEEEOO";
+    case 7:  return "OEOEOE";
+    case 8:  return "OEOEEO";
+    case 9:  return "OEEOEO";
+    default: return "ERRORE";
+  }
+}
+
 
 
 std::string ean::getLeftHandInvert(uint8_t number){
@@ -48,6 +65,24 @@ uint8_t ean::lookupRightHand(const std::string& barcode){
     return 42; // error
   }
 }
+
+uint8_t ean::lookupLeftHandOrder(const std::string& givenOrder){
+  static std::map <std::string, uint8_t > orderMap;
+  if (orderMap.empty()){
+    uint8_t curNum;
+    for (curNum=0; curNum<10; curNum++){
+      orderMap[getLeftHandOrder(curNum)]=curNum;
+    } // fill map
+  } // fill map
+  std::map<std::string,uint8_t>::const_iterator mapFinder;
+  mapFinder = orderMap.find(givenOrder);
+  if (orderMap.end() != mapFinder){
+    return mapFinder->second;
+  }else{
+    return 42; // error
+  }
+}
+
 
 ean::codeReturn ean::getType(const std::string& barcode){
   using std::map; using std::string;
@@ -93,6 +128,24 @@ std::vector<ean::codeReturn> ean::getTypes(const std::string& barcode){
   return returnValues;
 }
   
-
-
+unsigned int ean::calculateChecksum(const std::string& numbers){
+  /*
+   * note: we assume to have 7 or 12 digits. deletion of existing checksum
+   * should be done previously
+   */
+  std::string::const_reverse_iterator stringIterator;
+  unsigned int currentSum=0;
+  unsigned int currentMul=3; // start with 3 on the right
+  for (
+    stringIterator  = numbers.rbegin();
+    stringIterator != numbers.rend();
+    stringIterator++
+    )
+  {
+    unsigned int currentDigit = (*stringIterator)-'0';
+    currentSum += currentDigit*currentMul;
+    currentMul = 4-currentMul; // 1 becomes 3, 3 becomes 1
+  }
+  return 10-(currentSum%10);
+}  
 

@@ -64,6 +64,7 @@ void mkbarcode::printTest(std::ostream& out){
     out << (int) testZiffer << " Right " << ean::getRightHand(testZiffer);
     out << " LeftI " << ean::getLeftHandInvert(testZiffer);
     out << " LeftM " << ean::getLeftHandMirror(testZiffer);
+    out << " Order " << ean::getLeftHandOrder(testZiffer);
     out << " 128: " << code128::getBarCode(testZiffer);
     out << std::endl;
   }
@@ -293,6 +294,7 @@ void mkbarcode::lookupEAN(const std::string& givenBarcode){
     
   std::vector <ean::codeReturn> rightHandResults = ean::getTypes(rightHand);
   { // test if each char was correct in right hand. Delete results if not
+    dout << "Right Hand, try1: ";
     std::vector<ean::codeReturn>::const_iterator resultIterator;
     for (
       resultIterator  = rightHandResults.begin();
@@ -319,6 +321,7 @@ void mkbarcode::lookupEAN(const std::string& givenBarcode){
   }
   std::string rightHandDecoded;
   { // test if each char was correct in right hand. Delete results if not
+    dout << "Right Hand, try2: ";
     std::vector<ean::codeReturn>::const_iterator resultIterator;
     std::stringstream decodeStream;
     for (
@@ -367,9 +370,59 @@ void mkbarcode::lookupEAN(const std::string& givenBarcode){
     dout << endl;
     leftHandOrder = orderStream.str();
     leftHandDecoded = decodeStream.str();
+    dout << "LeftHand: " << leftHandDecoded << " Order: " << leftHandOrder << endl;
   } // after iteration;
+  
+  std::string orderDigit = "";
+  { // check leftHand Order. calculate Digit if needed
+    if (6==leftHandDecoded.size()){ // EAN13 - look up order for first digit
+      unsigned int leftHandOrderIndex = ean::lookupLeftHandOrder(leftHandOrder);
+      if (leftHandOrderIndex>9){
+        std::cerr << "Left hand order " << leftHandOrder << " seems invalid!" << endl;
+        exit(EXIT_FAILURE);
+      }
+      dout << "Order to index " << leftHandOrderIndex << endl;
+      std::stringstream convertStream;
+      convertStream << std::dec << leftHandOrderIndex;
+      orderDigit = convertStream.str();
+    }
+    if (4==leftHandDecoded.size()){ // EAN8 - should be all odd
+      if ("OOOO" != leftHandOrder){
+        std::cerr << "Error in Left Hand Order: " << leftHandOrder << " should be OOOO" << endl;
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+  
+  std::string completeCode;
+  
+  { // concat all strings
+    std::stringstream completeCodeStream;
+    completeCodeStream << orderDigit;
+    completeCodeStream << leftHandDecoded;
+    completeCodeStream << rightHandDecoded;
+    completeCode = completeCodeStream.str();
+  }
+  
+  { // calculate and check checksum
+    unsigned int calcCheckSum = ean::calculateChecksum(completeCode.substr(0,completeCode.size()-1));
+    dout << "checksums calc: " << std::dec << calcCheckSum;
+    unsigned char readCheckSum = completeCode[completeCode.size()-1]; 
+    unsigned int readCheckSumDigit = readCheckSum-'0'; // last digit
+    dout << " read: " << readCheckSum << " " <<  std::dec << readCheckSumDigit << endl;
+    if (readCheckSumDigit != calcCheckSum){
+      std::cerr << "Invalid Checksum: " << readCheckSumDigit << " should be " << calcCheckSum << endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+  
+  
+  switch (leftHandOrder.size()){
+  case 4: // short code
     
-    
+    std::cout << completeCode << std::endl;
+    break;
+  }
   dout.endScope("mkbarcode::lookupEAN");
 }
 
@@ -403,9 +456,11 @@ int main(int argc, char* argv[]){
     }else{ // barcode was given
       std::string testcode = argv[2];
       if (7==testcode.size()){ // a single digit is easy
+        cout << "7 bars -> single char" << endl;
         ean::codeReturn lookupResult = ean::getType(testcode);
         mkbarcode::printLookupResult(lookupResult);
       }else{ // complete code?
+        cout << "not 7 bars -> complete code" << endl;
         mkbarcode::lookupEAN(testcode);
       }
     } // barcode given
