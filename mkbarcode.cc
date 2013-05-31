@@ -23,7 +23,9 @@ void mkbarcode::printHelp(const std::string& programName){
   
   cout << "Available Modes:" << endl;
   cout << "  --test                 Print EAN codes for numbers 0-9" << endl;
-  cout << "  --lookupEAN BARCODE    lookup a single digit for EAN" << endl;
+  cout << "  --lookupEAN BARCODE7   lookup a single digit for EAN" << endl;
+  cout << "  --lookupEAN BARCODE    lookup a complete EAN" << endl;
+  cout << "  --lookupEAN            lookup EAN - interactive mode" << endl;
   cout << "  --createEAN NUMBER     create an EAN for this number" << endl;
   cout << "  --lookup128 BARCODE    lookup a complete Code128-barcode" << endl;
   cout << "  --create128B STRING    Convert the given String to Code128 in Code B" << endl;
@@ -409,20 +411,13 @@ void mkbarcode::lookupEAN(const std::string& givenBarcode){
     dout << "checksums calc: " << std::dec << calcCheckSum;
     unsigned char readCheckSum = completeCode[completeCode.size()-1]; 
     unsigned int readCheckSumDigit = readCheckSum-'0'; // last digit
-    dout << " read: " << readCheckSum << " " <<  std::dec << readCheckSumDigit << endl;
+    dout << " read: " << (char)readCheckSum << " " <<  std::dec << readCheckSumDigit << endl;
     if (readCheckSumDigit != calcCheckSum){
       std::cerr << "Invalid Checksum: " << readCheckSumDigit << " should be " << calcCheckSum << endl;
       exit(EXIT_FAILURE);
     }
   }
-  
-  
-  switch (leftHandOrder.size()){
-  case 4: // short code
-    
-    std::cout << completeCode << std::endl;
-    break;
-  }
+  std::cout << "Code is: " << completeCode << endl;
   dout.endScope("mkbarcode::lookupEAN");
 }
 
