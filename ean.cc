@@ -128,7 +128,7 @@ std::vector<ean::codeReturn> ean::getTypes(const std::string& barcode){
   return returnValues;
 }
   
-unsigned int ean::calculateChecksum(const std::string& numbers){
+std::string ean::calculateChecksum(const std::string& numbers){
   /*
    * note: we assume to have 7 or 12 digits. deletion of existing checksum
    * should be done previously
@@ -146,6 +146,29 @@ unsigned int ean::calculateChecksum(const std::string& numbers){
     currentSum += currentDigit*currentMul;
     currentMul = 4-currentMul; // 1 becomes 3, 3 becomes 1
   }
-  return 10-(currentSum%10);
+  uint8_t calcSum = (10-currentSum%10)%10;
+  return std::string(1,calcSum+'0'); // create string, one iteration of this char
 }  
+
+bool ean::checkChecksum(
+  const std::string& givenNumber,
+  std::string& readChecksum,
+  std::string& calcChecksum
+  )
+{
+  { // calculate and check checksum
+    calcChecksum = ean::calculateChecksum(givenNumber.substr(0,givenNumber.size()-1));
+    readChecksum = givenNumber.substr(givenNumber.size()-1,1); 
+    if (readChecksum != calcChecksum){
+      return false;
+    }else{
+      return true;
+    }
+  }
+}
+  
+  
+  
+  
+
 

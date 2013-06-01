@@ -104,7 +104,23 @@ namespace ean{
    * split from the numbers. Validation should be done
    * outside this function
    */
-  unsigned int calculateChecksum(const std::string& numbers);
+  std::string calculateChecksum(const std::string& numbers);
+  
+  /*!
+   * \brief check a barcode for correct checksum
+   *
+   * This function checks whether the checksum of a barcode
+   * (8 digit or 13 digit) is valid. It also updates given and correct
+   * checksum (need to be given as parameters)
+   *
+   * \return true, if checksum is correct. False on error
+   */
+  bool checkChecksum(
+    const std::string& givenNumber,
+    std::string& readChecksum,
+    std::string& calcChecksum
+    );
+  
   
 }; // namespace
 
