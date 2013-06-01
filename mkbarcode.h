@@ -38,6 +38,8 @@ namespace mkbarcode{
   
   void lookupEAN(const std::string& givenBarcode); 
   
+  void createEAN(const std::string& givenNumber);
+  
 }; // namespace mkbarcode
 
 

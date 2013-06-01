@@ -407,18 +407,212 @@ void mkbarcode::lookupEAN(const std::string& givenBarcode){
   }
   
   { // calculate and check checksum
-    unsigned int calcCheckSum = ean::calculateChecksum(completeCode.substr(0,completeCode.size()-1));
-    dout << "checksums calc: " << std::dec << calcCheckSum;
-    unsigned char readCheckSum = completeCode[completeCode.size()-1]; 
-    unsigned int readCheckSumDigit = readCheckSum-'0'; // last digit
-    dout << " read: " << (char)readCheckSum << " " <<  std::dec << readCheckSumDigit << endl;
-    if (readCheckSumDigit != calcCheckSum){
-      std::cerr << "Invalid Checksum: " << readCheckSumDigit << " should be " << calcCheckSum << endl;
+    std::string calcChecksum;
+    std::string readChecksum;
+    if (! ean::checkChecksum(completeCode,readChecksum,calcChecksum)){
+      std::cerr << "Invalid Checksum: " << readChecksum << " should be " << calcChecksum << endl;
       exit(EXIT_FAILURE);
     }
+    dout << "checksums calc: " << calcChecksum << " read: " << readChecksum << endl;
   }
   std::cout << "Code is: " << completeCode << endl;
   dout.endScope("mkbarcode::lookupEAN");
+}
+
+void mkbarcode::createEAN(const std::string& givenNumber){
+  using std::endl; using std::cerr; using std::cout;
+  dout.startScope("mkbarcode::createEAN");
+  /*
+   * There are several options on what is given and on how
+   * this should be interpreted:
+   *
+   * - If 7 numbers are given, an EAN-8-code should be created.
+   *   The checksum has to be calculated
+   * - If 8 numbers are given, an EAN-8-code should be created.
+   *   The checksum should be validated
+   * - if 11 numbers are given, an EAN-12 (UPC) should be created.
+   *   The checksum has to be calculated
+   * - if 12 numbers are given, this could be a request for an
+   *   EAN-12 (UPC) or an EAN-13 for which the checksum is to
+   *   be calculated. 
+   *   In either case, the user should be informed about the
+   *   ambiguity. 
+   *   However, the program should try to validate the checksum as
+   *   an UPC code and create that one, if the checksum is valid.
+   *   If the checksum is invalid, assume that this is an EAN-13
+   *   for which the barcode still needs to be calculated
+   *
+   * Remember that all EAN codes start and end with 101 and that
+   * even the small EAN-8 have a middle zone of 01010.
+   */
+  std::string paddedNumber;
+  { // pad number, if necessary
+    std::stringstream padNumberStream;
+    switch (givenNumber.size()){
+    case 7:
+      {
+        std::cout << "Warning: Incomplete (7-digit) number given; ";
+        std::string calcChecksum = ean::calculateChecksum(givenNumber);
+        std::cout << "Adding Checksum: " << calcChecksum << endl;
+        padNumberStream << givenNumber << calcChecksum;
+        break;
+      }
+    case 11:
+      {
+        std::cout << "Warning: Incomplete (11-digit) number given; " << endl;
+        std::string calcChecksum = ean::calculateChecksum(givenNumber);
+        std::cout << "Adding Checksum: " << calcChecksum;
+        std::cout << " and Prefix 0 for UPC" << endl;
+        padNumberStream << "0" << givenNumber << calcChecksum;
+        break;
+      }
+    case 12:
+      {
+        std::cout << "Warning: 12-digit-number can be interpreted two ways." << endl;
+        // first: try to validate checksum as UPC
+        std::string calcChecksumUPC;
+        std::string readChecksumUPC;
+        bool checksumValid = ean::checkChecksum(givenNumber,readChecksumUPC,calcChecksumUPC);
+        std::string calcChecksumEAN13 = ean::calculateChecksum(givenNumber);
+        std::cout << "This could be:" << std::endl;
+        std::cout << "0"<<givenNumber << " (";
+        if (!checksumValid){
+          std::cout << "invalid checksum, should be " << calcChecksumUPC;
+        }else{
+          std::cout << "valid checksum";
+        }
+        std::cout << ")" << endl;
+        std::cout << givenNumber << calcChecksumEAN13;
+        std::cout << " (calculated checksum)" << endl;
+        std::cout << "To prevent guessing, please give really wanted number" << endl;
+        if (! checksumValid){
+          std::cout << "Checksum invalid as UPC; treating as EAN-13 ;";
+          std::cout << "Adding Checksum: " << calcChecksumEAN13 << endl;
+          padNumberStream << givenNumber << calcChecksumEAN13;
+        }else{ // it *is* valid as UPC
+          std::cout << "Checksum valid as UPC; treating as UPC; ";
+          std::cout << "Adding Prefix 0 for UPC" << endl;
+          padNumberStream << "0" << givenNumber;
+          // this is the ambiguity case which can lead to wrong/undesired behaviour 
+        }
+        break;
+      }
+    case 8:
+    case 13: // nothing to do. Check Checksum, later
+      {
+        padNumberStream << givenNumber;
+        break;
+      }
+    default:
+      {
+        std::cerr << "Error: Size (" << givenNumber.size() << ")not supported";
+        std::cerr << " and not recoverable" << std::endl;
+        exit(EXIT_FAILURE);
+        break;
+      }
+    } // switch
+    paddedNumber=padNumberStream.str();
+  }
+  dout << "Number after patching: " << paddedNumber << endl;
+  
+  
+  { // test the checksum
+    // for padded numbers, this should (hopefully) always work
+    std::string calcChecksum;
+    std::string readChecksum;
+    if (! ean::checkChecksum(paddedNumber,readChecksum,calcChecksum)){
+      std::string correctNumber = paddedNumber;
+      std::cout << "Warning: Checksum is wrong. Is " << readChecksum;
+      std::cout << " but should be " << calcChecksum << endl;
+      std::cout << "I will respect your wish to create the wrong barcode ";
+      std::cout << " - But don't expect it to be readble." << endl;
+      correctNumber[correctNumber.size()-1] = calcChecksum[0];//  append correct sum
+      std::cout << "You may want to try again with " << correctNumber << endl;
+    }
+    dout << "checksums calc: " << calcChecksum << " read: " << readChecksum << endl;
+  } // checksum test
+  
+  // finally: The real creation
+  std::string leftHand;
+  std::string rightHand;
+  std::string leftHandOrder;
+  { // divide into hands and determine lefthand-order
+    switch (paddedNumber.size()){
+    case 8:
+      {
+        leftHand=paddedNumber.substr(0,4);
+        rightHand=paddedNumber.substr(4,4);
+        leftHandOrder="OOOO";
+        break;
+      }
+    case 13:
+      {
+        leftHand=paddedNumber.substr(1,6);
+        rightHand=paddedNumber.substr(7,6);
+        uint8_t orderIndex = paddedNumber[0]-'0';
+        leftHandOrder=ean::getLeftHandOrder(orderIndex);
+        break;
+      }
+    default:
+      std::cerr << "error: wrong size for barcode" << endl;
+      exit(EXIT_FAILURE);
+      break;
+    } // switch
+    dout << "L: " << leftHand << " R: " << rightHand << " O: " << leftHandOrder << endl;
+  }
+  
+  std::stringstream barcodeStream;
+  { // start
+    barcodeStream << "101";
+  }
+  { // left hand
+    std::string::const_iterator orderIterator;
+    std::string::const_iterator handIterator;
+    for (
+      orderIterator  = leftHandOrder.begin(), handIterator  = leftHand.begin();
+      orderIterator != leftHandOrder.end()  , handIterator != leftHand.end();
+      orderIterator++                       , handIterator++
+      )
+    { // for all digits
+      uint8_t currentDigit=(*handIterator)-'0';
+      if ('E' == *orderIterator){ // even
+        barcodeStream << ean::getLeftHandMirror(currentDigit);
+      }else{ // assume odd
+        barcodeStream << ean::getLeftHandInvert(currentDigit);
+      }
+    }
+  } // left hand
+
+  { // middle
+    barcodeStream << "01010";
+  }
+  { // right hand
+    std::string::const_iterator handIterator;
+    for(
+      handIterator  = rightHand.begin();
+      handIterator != rightHand.end();
+      handIterator++
+      )
+    { // for all digits on the right hand
+      barcodeStream << ean::getRightHand((*handIterator)-'0');
+    }
+  } // right hand
+  { // end
+    barcodeStream << "101";
+  }
+  dout << "Barcode should be " << barcodeStream.str() << endl;
+  std::string outFilename;
+  { // convert number to filename
+    outFilename = paddedNumber + ".EAN.bmp";
+  }
+   
+  { // create image and write to file
+    pixelbild barcodeBild = toPixelbild(barcodeStream.str());
+    bmpreader::writeFile(barcodeBild,outFilename);
+  }
+  
+  dout.endScope("mkbarcode::createEAN");
+  
 }
 
 
@@ -476,31 +670,7 @@ int main(int argc, char* argv[]){
       exit(EXIT_FAILURE);
     }
     std::string codeToCreate = argv[2];
-    /*
-     * There are several options on what is given and on how
-     * this should be interpreted:
-     *
-     * - If 7 numbers are given, an EAN-8-code should be created.
-     *   The checksum has to be calculated
-     * - If 8 numbers are given, an EAN-8-code should be created.
-     *   The checksum should be validated
-     * - if 11 numbers are given, an EAN-12 (UPC) should be created.
-     *   The checksum has to be calculated
-     * - if 12 numbers are given, this could be a request for an
-     *   EAN-12 (UPC) or an EAN-13 for which the checksum is to
-     *   be calculated. 
-     *   In either case, the user should be informed about the
-     *   ambiguity. 
-     *   However, the program should try to validate the checksum as
-     *   an UPC code and create that one, if the checksum is valid.
-     *   If the checksum is invalid, assume that this is an EAN-13
-     *   for which the barcode still needs to be calculated
-     *
-     * Remember that all EAN codes start and end with 101 and that
-     * even the small EAN-8 have a middle zone of 01010.
-     */
-    
-    
+    mkbarcode::createEAN(codeToCreate);
   }
   
   
